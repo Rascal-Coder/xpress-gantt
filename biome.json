@@ -1,0 +1,16 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "extends": ["ultracite"],
+  "files": {
+    "ignore": [
+      "dist/**"
+    ]
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "noUnusedTemplateLiteral": "off"
+      }
+    }
+  }
+}

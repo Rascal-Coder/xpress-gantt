@@ -1,0 +1,28 @@
+{
+  "name": "xpress-gantt",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts"
+  ],
+  "scripts": {
+    "build": "tsup"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.10.0",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "lefthook": "^1.11.13",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "ultracite": "^4.2.5"
+  },
+  "engines": {
+    "node": ">=20.10.0",
+    "pnpm": ">=9.12.0"
+  }
+}
