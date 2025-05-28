@@ -174,5 +174,4 @@ const DEFAULT_OPTIONS = {
   view_mode_select: false,
   view_modes: DEFAULT_VIEW_MODES,
 };
-
 export { DEFAULT_OPTIONS, DEFAULT_VIEW_MODES };

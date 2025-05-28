@@ -1,7 +1,7 @@
+import $ from 'cash-dom';
 import date_utils from '../date-utils';
 import type { Gantt, Task } from '../popup/types';
-import { $, animateSVG, createSVG } from '../svg-utils';
-
+import { animateSVG, createSVG } from '../svg-utils';
 const NON_SAFARI_BROWSER_REGEX = /^((?!chrome|android).)*safari/i;
 
 export default class Bar {
@@ -44,9 +44,9 @@ export default class Bar {
     this.bar_group.innerHTML = '';
     this.handle_group.innerHTML = '';
     if (this.task.custom_class) {
-      this.group.classList.add(this.task.custom_class as string);
+      $(this.group).addClass(this.task.custom_class);
     } else {
-      this.group.classList.value = 'bar-wrapper';
+      $(this.group).removeClass().addClass('bar-wrapper');
     }
     this.prepare_values();
     this.draw();
@@ -63,37 +63,33 @@ export default class Bar {
   prepare_wrappers(): void {
     this.group = createSVG('g', {
       class: `bar-wrapper${this.task.custom_class ? ` ${this.task.custom_class}` : ''}`,
-      'data-id': this.task.id as string,
-    }) as SVGGElement;
+      'data-id': this.task.id,
+    });
     this.bar_group = createSVG('g', {
       class: 'bar-group',
       append_to: this.group,
-    }) as SVGGElement;
+    });
     this.handle_group = createSVG('g', {
       class: 'handle-group',
       append_to: this.group,
-    }) as SVGGElement;
+    });
   }
 
   prepare_values(): void {
     this.invalid = Boolean(this.task.invalid);
-    this.height = (this.gantt.options as Record<string, number>).bar_height;
+    this.height = this.gantt.options.bar_height || 0;
     this.image_size = this.height - 5;
-    this.task._start = new Date(this.task.start as string);
-    this.task._end = new Date(this.task.end as string);
+    this.task._start = new Date(this.task.start);
+    this.task._end = new Date(this.task.end);
     this.compute_x();
     this.compute_y();
     this.compute_duration();
-    this.corner_radius = (
-      this.gantt.options as Record<string, number>
-    ).bar_corner_radius;
-    this.width =
-      (this.gantt.config as Record<string, number>).column_width *
-      this.duration;
-    if (!this.task.progress || (this.task.progress as number) < 0) {
+    this.corner_radius = this.gantt.options.bar_corner_radius || 0;
+    this.width = (this.gantt.config.column_width || 0) * this.duration;
+    if (!this.task.progress || this.task.progress < 0) {
       this.task.progress = 0;
     }
-    if ((this.task.progress as number) > 100) {
+    if (this.task.progress > 100) {
       this.task.progress = 100;
     }
   }
@@ -119,7 +115,7 @@ export default class Bar {
   prepare_expected_progress_values() {
     this.compute_expected_progress();
     this.expected_progress_width =
-      (this.gantt.options as Record<string, number>).column_width *
+      (this.gantt.config.column_width || 0) *
         this.duration *
         (this.expected_progress / 100) || 0;
   }
@@ -151,12 +147,12 @@ export default class Bar {
       append_to: this.bar_group,
     });
     if (this.task.color) {
-      this.$bar.style.fill = this.task.color as string;
+      this.$bar.style.fill = this.task.color;
     }
     animateSVG(this.$bar, 'width', '0', String(this.width));
 
     if (this.invalid) {
-      this.$bar.classList.add('bar-invalid');
+      $(this.$bar).addClass('bar-invalid');
     }
   }
 
@@ -203,7 +199,7 @@ export default class Bar {
       append_to: this.bar_group,
     });
     if (this.task.color_progress) {
-      this.$bar_progress.style.fill = this.task.color_progress as string;
+      this.$bar_progress.style.fill = this.task.color_progress;
     }
     const x =
       (date_utils.diff(
@@ -211,8 +207,8 @@ export default class Bar {
         this.gantt.gantt_start,
         this.gantt.config.unit
       ) /
-        this.gantt.config.step) *
-      this.gantt.config.column_width;
+        (this.gantt.config.step || 1)) *
+      (this.gantt.config.column_width || 0);
 
     const $date_highlight = this.gantt.create_el({
       classes: `date-range-highlight hide highlight-${this.task.id}`,
@@ -220,7 +216,7 @@ export default class Bar {
       left: x,
     });
     this.$date_highlight = $date_highlight;
-    this.gantt.$lower_header.prepend(this.$date_highlight);
+    $(this.gantt.$lower_header).prepend($date_highlight);
 
     animateSVG(this.$bar_progress, 'width', '0', String(this.progress_width));
   }
@@ -229,16 +225,22 @@ export default class Bar {
     const width = this.$bar.getWidth();
     const ignored_end = this.x + width;
     const total_ignored_area =
-      this.gantt.config.ignored_positions.reduce((acc: number, val: number) => {
-        return acc + +(val >= this.x && val < ignored_end);
-      }, 0) * this.gantt.config.column_width;
+      (this.gantt.config.ignored_positions?.reduce(
+        (acc: number, val: number) => {
+          return acc + +(val >= this.x && val < ignored_end);
+        },
+        0
+      ) || 0) * (this.gantt.config.column_width || 0);
     let progress_width =
-      ((width - total_ignored_area) * this.task.progress) / 100;
+      ((width - total_ignored_area) * (this.task.progress ?? 0)) / 100;
     const progress_end = this.x + progress_width;
     const total_ignored_progress =
-      this.gantt.config.ignored_positions.reduce((acc: number, val: number) => {
-        return acc + +(val >= this.x && val < progress_end);
-      }, 0) * this.gantt.config.column_width;
+      (this.gantt.config.ignored_positions?.reduce(
+        (acc: number, val: number) => {
+          return acc + +(val >= this.x && val < progress_end);
+        },
+        0
+      ) || 0) * (this.gantt.config.column_width || 0);
 
     progress_width += total_ignored_progress;
 
@@ -247,7 +249,7 @@ export default class Bar {
     );
 
     while (ignored_regions.length) {
-      progress_width += this.gantt.config.column_width;
+      progress_width += this.gantt.config.column_width || 0;
       ignored_regions = this.gantt.get_ignored_region(this.x + progress_width);
     }
     this.progress_width = progress_width;
@@ -360,8 +362,8 @@ export default class Bar {
     }
 
     for (const handle of this.handles) {
-      $.on(handle, 'mouseenter', () => handle.classList.add('active'));
-      $.on(handle, 'mouseleave', () => handle.classList.remove('active'));
+      $(handle).on('mouseenter', () => $(handle).addClass('active'));
+      $(handle).on('mouseleave', () => $(handle).removeClass('active'));
     }
   }
 
@@ -374,26 +376,17 @@ export default class Bar {
 
   setup_click_event() {
     const task_id = this.task.id;
-    $.on(this.group, 'mouseover', (e) => {
-      const mouseEvent = e as MouseEvent;
-      this.gantt.trigger_event('hover', [
-        this.task,
-        mouseEvent.screenX,
-        mouseEvent.screenY,
-        e,
-      ]);
+    $(this.group).on('mouseover', (e) => {
+      this.gantt.trigger_event('hover', [this.task, e.screenX, e.screenY, e]);
     });
 
     if (this.gantt.options.popup_on === 'click') {
-      $.on(this.group, 'mouseup', (e) => {
-        const mouseEvent = e as MouseEvent;
+      $(this.group).on('mouseup', (e) => {
+        const mouseEvent = e;
         const posX = mouseEvent.offsetX || mouseEvent.layerX;
         if (this.$handle_progress) {
           const cx = +(this.$handle_progress.getAttribute('cx') || 0);
           if (cx > posX - 1 && cx < posX + 1) {
-            return;
-          }
-          if (this.gantt.bar_being_dragged) {
             return;
           }
         }
@@ -406,8 +399,8 @@ export default class Bar {
       });
     }
     let timeout: ReturnType<typeof setTimeout>;
-    $.on(this.group, 'mouseenter', (e) => {
-      const mouseEvent = e as MouseEvent;
+    $(this.group).on('mouseenter', (e) => {
+      const mouseEvent = e;
       timeout = setTimeout(() => {
         if (this.gantt.options.popup_on === 'hover') {
           this.gantt.show_popup({
@@ -417,26 +410,24 @@ export default class Bar {
             target: this.$bar,
           });
         }
-        this.gantt.$container
-          .querySelector(`.highlight-${task_id}`)
-          .classList.remove('hide');
+        $(this.gantt.$container)
+          .find(`.highlight-${task_id}`)
+          .removeClass('hide');
       }, 200);
     });
-    $.on(this.group, 'mouseleave', () => {
+    $(this.group).on('mouseleave', () => {
       clearTimeout(timeout);
       if (this.gantt.options.popup_on === 'hover') {
         this.gantt.popup?.hide?.();
       }
-      this.gantt.$container
-        .querySelector(`.highlight-${task_id}`)
-        .classList.add('hide');
+      $(this.gantt.$container).find(`.highlight-${task_id}`).addClass('hide');
     });
 
-    $.on(this.group, 'click', () => {
+    $(this.group).on('click', () => {
       this.gantt.trigger_event('click', [this.task]);
     });
 
-    $.on(this.group, 'dblclick', (e) => {
+    $(this.group).on('dblclick', () => {
       if (this.action_completed) {
         // just finished a move action, wait for a few seconds
         return;
@@ -449,7 +440,7 @@ export default class Bar {
       this.gantt.trigger_event('double_click', [this.task]);
     });
     let tapedTwice = false;
-    $.on(this.group, 'touchstart', (e) => {
+    $(this.group).on('touchstart', (e) => {
       if (!tapedTwice) {
         tapedTwice = true;
         setTimeout(() => {
@@ -478,10 +469,10 @@ export default class Bar {
     const bar = this.$bar;
 
     if (x) {
-      const xs = this.task.dependencies.map((dep: Task) => {
-        return this.gantt.get_bar(dep).$bar.getX();
-      });
-      const valid_x = xs.reduce((prev: boolean, curr: number) => {
+      const xs = this.task.dependencies?.map((dep: Task) =>
+        this.gantt.get_bar(dep).$bar.getX()
+      );
+      const valid_x = xs?.reduce((prev: boolean, curr: number) => {
         return prev && x >= curr;
       }, true);
       if (!valid_x) {
@@ -539,7 +530,7 @@ export default class Bar {
     const newImgX = (img && img.getX() + x) || 0;
     const imgWidth = (img && img.getBBox().width + 7) || 7;
     const labelEndX = newLabelX + label.getBBox().width + 7;
-    const viewportCentral = sx + container.clientWidth / 2;
+    const viewportCentral = sx + (container?.clientWidth || 0) / 2;
 
     if (label.classList.contains('big')) {
       return;
@@ -603,18 +594,18 @@ export default class Bar {
 
   compute_start_end_date() {
     const bar = this.$bar;
-    const x_in_units = bar.getX() / this.gantt.config.column_width;
+    const x_in_units = bar.getX() / this.gantt.config.column_width!;
     const new_start_date = date_utils.add(
       this.gantt.gantt_start,
-      x_in_units * this.gantt.config.step,
-      this.gantt.config.unit
+      x_in_units * this.gantt.config.step!,
+      this.gantt.config.unit!
     );
 
-    const width_in_units = bar.getWidth() / this.gantt.config.column_width;
+    const width_in_units = bar.getWidth() / this.gantt.config.column_width!;
     const new_end_date = date_utils.add(
       new_start_date,
-      width_in_units * this.gantt.config.step,
-      this.gantt.config.unit
+      width_in_units * this.gantt.config.step!,
+      this.gantt.config.unit!
     );
 
     return { new_start_date, new_end_date };
@@ -626,23 +617,26 @@ export default class Bar {
     const progress_area = this.x + this.progress_width;
     const progress =
       this.progress_width -
-      this.gantt.config.ignored_positions.reduce((acc: number, val: number) => {
-        return acc + +(val >= this.x && val <= progress_area);
-      }, 0) *
-        this.gantt.config.column_width;
+      (this.gantt.config.ignored_positions?.reduce(
+        (acc: number, val: number) => {
+          return acc + +(val >= this.x && val <= progress_area);
+        },
+        0
+      ) || 0) *
+        (this.gantt.config.column_width || 0);
     if (progress < 0) {
       return 0;
     }
     const total =
       this.$bar.getWidth() -
-      this.ignored_duration_raw * this.gantt.config.column_width;
+      this.ignored_duration_raw * (this.gantt.config.column_width || 0);
     return Number.parseInt(String((progress / total) * 100), 10);
   }
 
   compute_expected_progress() {
     this.expected_progress =
-      date_utils.diff(date_utils.today(), this.task._start, 'hour') /
-      this.gantt.config.step;
+      date_utils.diff(date_utils.today(), this.task._start as Date, 'hour') /
+      (this.gantt.config.step || 0);
     this.expected_progress =
       ((this.expected_progress < this.duration
         ? this.expected_progress
@@ -657,19 +651,20 @@ export default class Bar {
     const gantt_start = this.gantt.gantt_start;
 
     const diff =
-      date_utils.diff(task_start, gantt_start, this.gantt.config.unit) /
-      this.gantt.config.step;
+      date_utils.diff(task_start as Date, gantt_start, this.gantt.config.unit) /
+      (this.gantt.config.step || 0);
 
-    const x = diff * column_width;
+    const x = diff * (column_width || 0);
 
     this.x = x;
   }
 
   compute_y() {
     this.y =
-      this.gantt.config.header_height +
-      this.gantt.options.padding / 2 +
-      this.task._index * (this.height + this.gantt.options.padding);
+      (this.gantt.config.header_height || 0) +
+      (this.gantt.options.padding || 0) / 2 +
+      (this.task._index || 0) *
+        ((this.height || 0) + (this.gantt.options.padding || 0));
   }
 
   compute_duration() {
@@ -682,7 +677,7 @@ export default class Bar {
     ) {
       duration_in_days++;
       if (
-        !this.gantt.config.ignored_dates.find(
+        !this.gantt.config.ignored_dates?.find(
           (k: Date) => k.getTime() === d.getTime()
         ) &&
         (!this.gantt.config.ignored_function ||
@@ -697,14 +692,14 @@ export default class Bar {
     this.duration =
       date_utils.convert_scales(
         `${duration_in_days}d`,
-        this.gantt.config.unit
-      ) / this.gantt.config.step;
+        this.gantt.config.unit!
+      ) / (this.gantt.config.step || 0);
 
     this.actual_duration_raw =
       date_utils.convert_scales(
         `${actual_duration_in_days}d`,
-        this.gantt.config.unit
-      ) / this.gantt.config.step;
+        this.gantt.config.unit!
+      ) / (this.gantt.config.step || 0);
 
     this.ignored_duration_raw = this.duration - this.actual_duration_raw;
   }
@@ -726,8 +721,8 @@ export default class Bar {
     this.$expected_bar_progress.setAttribute(
       'width',
       String(
-        this.gantt.config.column_width *
-          this.actual_duration_raw *
+        (this.gantt.config.column_width || 0) *
+          (this.actual_duration_raw || 0) *
           (this.expected_progress / 100) || 0
       )
     );

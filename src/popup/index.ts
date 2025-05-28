@@ -1,7 +1,7 @@
+import $ from 'cash-dom';
 import type { Gantt, PopupFunction, ShowOptions } from './types';
-
 export default class Popup {
-  private parent: HTMLElement;
+  parent: HTMLElement;
   private popup_func: PopupFunction;
   private gantt: Gantt;
   private title!: HTMLElement;
@@ -18,37 +18,39 @@ export default class Popup {
   }
 
   make(): void {
-    this.parent.innerHTML = `
+    $(this.parent).html(
+      `
             <div class="title"></div>
             <div class="subtitle"></div>
             <div class="details"></div>
             <div class="actions"></div>
-        `;
+        `
+    );
     this.hide();
 
-    this.title = this.parent.querySelector('.title') as HTMLElement;
-    this.subtitle = this.parent.querySelector('.subtitle') as HTMLElement;
-    this.details = this.parent.querySelector('.details') as HTMLElement;
-    this.actions = this.parent.querySelector('.actions') as HTMLElement;
+    this.title = this.parent.querySelector('.title')!;
+    this.subtitle = this.parent.querySelector('.subtitle')!;
+    this.details = this.parent.querySelector('.details')!;
+    this.actions = this.parent.querySelector('.actions')!;
   }
 
   show({ x, y, task }: ShowOptions): void {
-    this.actions.innerHTML = '';
+    $(this.actions).html('');
 
     const html = this.popup_func({
       task,
       chart: this.gantt,
       get_title: () => this.title,
       set_title: (title) => {
-        this.title.innerHTML = title;
+        $(this.title).html(title);
       },
       get_subtitle: () => this.subtitle,
       set_subtitle: (subtitle) => {
-        this.subtitle.innerHTML = subtitle;
+        $(this.subtitle).html(subtitle);
       },
       get_details: () => this.details,
       set_details: (details) => {
-        this.details.innerHTML = details;
+        $(this.details).html(details);
       },
       add_action: (htmlContent, func) => {
         const action = this.gantt.create_el({
@@ -60,8 +62,8 @@ export default class Popup {
         const finalHtml: string =
           typeof htmlContent === 'function' ? htmlContent(task) : htmlContent;
 
-        action.innerHTML = finalHtml;
-        action.onclick = (e) => func(task, this.gantt, e as MouseEvent);
+        $(action).html(finalHtml);
+        $(action).on('click', (e) => func(task, this.gantt, e));
       },
     });
 
@@ -69,21 +71,20 @@ export default class Popup {
       return;
     }
     if (html) {
-      this.parent.innerHTML = html;
+      $(this.parent).html(html);
     }
 
-    if (this.actions.innerHTML === '') {
-      this.actions.remove();
+    if ($(this.actions).html() === '') {
+      $(this.actions).remove();
     } else {
-      this.parent.appendChild(this.actions);
+      $(this.parent).append(this.actions);
     }
-
-    this.parent.style.left = `${x + 10}px`;
-    this.parent.style.top = `${y - 10}px`;
-    this.parent.classList.remove('hide');
+    $(this.parent).css('left', `${x + 10}px`);
+    $(this.parent).css('top', `${y - 10}px`);
+    $(this.parent).removeClass('hide');
   }
 
   hide(): void {
-    this.parent.classList.add('hide');
+    $(this.parent).addClass('hide');
   }
 }

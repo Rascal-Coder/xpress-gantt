@@ -10,7 +10,7 @@ const MILLISECOND = 'millisecond';
 const TIME_SEPARATOR_REGEX = /[.:]/;
 
 type DateValues = [number, number, number, number, number, number, number];
-type DateScale =
+export type DateScale =
   | typeof YEAR
   | typeof MONTH
   | typeof DAY

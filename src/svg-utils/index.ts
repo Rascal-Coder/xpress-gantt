@@ -1,6 +1,6 @@
-import type { CreateSVGAttributes, CustomEvent } from './types';
-
-const SPACE_REGEX = /\s+/;
+import $ from 'cash-dom';
+import type { CreateSVGAttributes } from './types';
+// const SPACE_REGEX = /\s+/;
 
 const CUBIC_BEZIER = {
   ease: '.25 .1 .25 1',
@@ -26,133 +26,133 @@ const CUBIC_BEZIER = {
  * const container = document.querySelector('.container');
  * const button = $('button', container);
  */
-export function $<T extends Element = Element>(
-  expr: string | T | null | undefined,
-  con?: Document | Element
-): T | null {
-  if (typeof expr === 'string') {
-    return (con || document).querySelector<T>(expr);
-  }
-  return expr ?? null;
-}
+// export function $<T extends Element = Element>(
+//   expr: string | T | null | undefined,
+//   con?: Document | Element
+// ): T | null {
+//   if (typeof expr === 'string') {
+//     return (con || document).querySelector<T>(expr);
+//   }
+//   return expr ?? null;
+// }
 
-/**
- * 绑定事件监听器
- * @param {Element} element - 目标元素
- * @param {string} event - 事件名称
- * @param {string | EventListener} selectorOrCallback - 选择器或回调函数
- * @param {EventListener} [callback] - 回调函数（当第三个参数为选择器时）
- */
-$.on = (
-  element: Element,
-  event: string,
-  selectorOrCallback: string | EventListener,
-  callback?: EventListener
-): void => {
-  if (callback) {
-    // 四个参数的情况：element, event, selector, callback
-    $.delegate(element, event, selectorOrCallback as string, callback);
-  } else {
-    // 三个参数的情况：element, event, callback
-    $.bind(element, event, selectorOrCallback as EventListener);
-  }
-};
+// /**
+//  * 绑定事件监听器
+//  * @param {Element} element - 目标元素
+//  * @param {string} event - 事件名称
+//  * @param {string | EventListener} selectorOrCallback - 选择器或回调函数
+//  * @param {EventListener} [callback] - 回调函数（当第三个参数为选择器时）
+//  */
+// $.on = (
+//   element: Element,
+//   event: string,
+//   selectorOrCallback: string | EventListener,
+//   callback?: EventListener
+// ): void => {
+//   if (callback) {
+//     // 四个参数的情况：element, event, selector, callback
+//     $.delegate(element, event, selectorOrCallback as string, callback);
+//   } else {
+//     // 三个参数的情况：element, event, callback
+//     $.bind(element, event, selectorOrCallback as EventListener);
+//   }
+// };
 
-/**
- * 移除事件监听器
- * @param {Element} element - 目标元素
- * @param {string} event - 事件名称
- * @param {EventListener} handler - 事件处理函数
- */
-$.off = (element: Element, event: string, handler: EventListener): void => {
-  element.removeEventListener(event, handler);
-};
+// /**
+//  * 移除事件监听器
+//  * @param {Element} element - 目标元素
+//  * @param {string} event - 事件名称
+//  * @param {EventListener} handler - 事件处理函数
+//  */
+// $.off = (element: Element, event: string, handler: EventListener): void => {
+//   element.removeEventListener(event, handler);
+// };
 
-/**
- * 直接绑定事件到元素
- * @param {Element} element - 目标元素
- * @param {string} event - 事件名称，可以是空格分隔的多个事件
- * @param {EventListener} callback - 事件处理函数
- */
-$.bind = (element: Element, event: string, callback: EventListener): void => {
-  for (const eventName of event.split(SPACE_REGEX)) {
-    element.addEventListener(eventName, callback);
-  }
-};
+// /**
+//  * 直接绑定事件到元素
+//  * @param {Element} element - 目标元素
+//  * @param {string} event - 事件名称，可以是空格分隔的多个事件
+//  * @param {EventListener} callback - 事件处理函数
+//  */
+// $.bind = (element: Element, event: string, callback: EventListener): void => {
+//   for (const eventName of event.split(SPACE_REGEX)) {
+//     element.addEventListener(eventName, callback);
+//   }
+// };
 
-/**
- * 使用事件委托绑定事件
- * @param {Element} element - 委托元素
- * @param {string} event - 事件名称
- * @param {string} selector - 目标选择器
- * @param {EventListener} callback - 事件处理函数
- */
-$.delegate = (
-  element: Element,
-  event: string,
-  selector: string,
-  callback: EventListener
-): void => {
-  element.addEventListener(event, function (this: Element, e: Event) {
-    const target = e.target as Element;
-    const delegatedTarget = target.closest(selector);
-    if (delegatedTarget) {
-      (e as CustomEvent).delegatedTarget = delegatedTarget;
-      callback.call(this, e);
-    }
-  });
-};
+// /**
+//  * 使用事件委托绑定事件
+//  * @param {Element} element - 委托元素
+//  * @param {string} event - 事件名称
+//  * @param {string} selector - 目标选择器
+//  * @param {EventListener} callback - 事件处理函数
+//  */
+// $.delegate = (
+//   element: Element,
+//   event: string,
+//   selector: string,
+//   callback: EventListener
+// ): void => {
+//   element.addEventListener(event, function (this: Element, e: Event) {
+//     const target = e.target as Element;
+//     const delegatedTarget = target.closest(selector);
+//     if (delegatedTarget) {
+//       (e as CustomEvent).delegatedTarget = delegatedTarget;
+//       callback.call(this, e);
+//     }
+//   });
+// };
 
-/**
- * 查找最近的匹配选择器的祖先元素
- * @param {string} selector - CSS选择器
- * @param {Element} element - 起始元素
- * @returns {Element | null} 匹配的元素或null
- */
-$.closest = (selector: string, element: Element): Element | null => {
-  if (!element) {
-    return null;
-  }
+// /**
+//  * 查找最近的匹配选择器的祖先元素
+//  * @param {string} selector - CSS选择器
+//  * @param {Element} element - 起始元素
+//  * @returns {Element | null} 匹配的元素或null
+//  */
+// $.closest = (selector: string, element: Element): Element | null => {
+//   if (!element) {
+//     return null;
+//   }
 
-  if (element.matches(selector)) {
-    return element;
-  }
+//   if (element.matches(selector)) {
+//     return element;
+//   }
 
-  return element.parentNode instanceof Element
-    ? $.closest(selector, element.parentNode as Element)
-    : null;
-};
+//   return element.parentNode instanceof Element
+//     ? $.closest(selector, element.parentNode as Element)
+//     : null;
+// };
 
-/**
- * 获取或设置元素属性
- * @param {Element} element - 目标元素
- * @param {string | Record<string, string>} attr - 属性名或属性对象
- * @param {string} [value] - 属性值（当attr为字符串时）
- * @returns {string | null | undefined} 获取属性时返回属性值，设置属性时返回undefined
- */
-$.attr = (
-  element: Element,
-  attr: string | Record<string, string>,
-  value?: string
-): string | null | undefined => {
-  if (!value && typeof attr === 'string') {
-    return element.getAttribute(attr);
-  }
+// /**
+//  * 获取或设置元素属性
+//  * @param {Element} element - 目标元素
+//  * @param {string | Record<string, string>} attr - 属性名或属性对象
+//  * @param {string} [value] - 属性值（当attr为字符串时）
+//  * @returns {string | null | undefined} 获取属性时返回属性值，设置属性时返回undefined
+//  */
+// $.attr = (
+//   element: Element,
+//   attr: string | Record<string, string>,
+//   value?: string
+// ): string | null | undefined => {
+//   if (!value && typeof attr === 'string') {
+//     return element.getAttribute(attr);
+//   }
 
-  if (typeof attr === 'object') {
-    for (const key in attr) {
-      if (Object.prototype.hasOwnProperty.call(attr, key)) {
-        $.attr(element, key, attr[key]);
-      }
-    }
-    return undefined;
-  }
+//   if (typeof attr === 'object') {
+//     for (const key in attr) {
+//       if (Object.prototype.hasOwnProperty.call(attr, key)) {
+//         $.attr(element, key, attr[key]);
+//       }
+//     }
+//     return undefined;
+//   }
 
-  if (value) {
-    element.setAttribute(attr, value);
-  }
-  return undefined;
-};
+//   if (value) {
+//     element.setAttribute(attr, value);
+//   }
+//   return undefined;
+// };
 
 /**
  * 获取贝塞尔曲线参数
@@ -281,7 +281,7 @@ function getAnimationElement(
 ) {
   const animEl = svgElement.querySelector('animate');
   if (animEl) {
-    $.attr(animEl, {
+    $(animEl).attr({
       attributeName: attr,
       from,
       to,
@@ -302,7 +302,7 @@ function getAnimationElement(
     keyTimes: '0; 1',
     keySplines: cubic_bezier('ease-out'),
   });
-  svgElement.appendChild(animateElement);
+  $(svgElement).append(animateElement);
 
   return svgElement;
 }

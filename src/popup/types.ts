@@ -1,28 +1,58 @@
+import type Popup from '.';
+import type { CreateElOptions } from '..';
+import type Bar from '../bar';
+import type { DateScale } from '../date-utils';
 interface Task {
   id?: string;
   name?: string;
   description?: string;
-  _start?: Date;
-  _end?: Date;
+  start: string | Date;
+  end: string | Date;
+  _start: Date;
+  _end: Date;
+  _index: number;
   actual_duration?: number;
   ignored_duration?: number;
   progress?: number;
-  // 其他可能的任务属性
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  [key: string]: any;
+  custom_class?: string;
+  invalid?: boolean;
+  thumbnail?: string;
+  color?: string;
+  color_progress?: string;
+  dependencies: string | string[];
+  duration?: string;
+  task?: Task;
 }
 
 interface Gantt {
-  create_el: (options: {
-    classes?: string;
-    type?: string;
-    append_to?: HTMLElement;
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    [key: string]: any;
-  }) => HTMLElement;
-  // 其他甘特图方法和属性
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  [key: string]: any;
+  get_bar: (task: Task) => Bar;
+  $lower_header: HTMLElement;
+  gantt_start: Date;
+  create_el: (options: CreateElOptions) => HTMLElement;
+  options: {
+    bar_height?: number;
+    bar_corner_radius?: number;
+    show_expected_progress?: boolean;
+    readonly_progress?: boolean;
+    readonly_dates?: boolean;
+    readonly?: boolean;
+    popup_on?: 'click' | 'hover';
+    padding?: number;
+  };
+  trigger_event: (event: string, args: unknown[]) => void;
+  config: {
+    column_width?: number;
+    unit?: DateScale;
+    step?: number;
+    ignored_positions?: number[];
+    header_height?: number;
+    ignored_dates?: Date[];
+    ignored_function?: (date: Date) => boolean;
+  };
+  get_ignored_region: (x: number, drn?: 1) => number[];
+  show_popup: (options: ShowOptions) => void;
+  $container: HTMLElement;
+  popup: Popup;
 }
 
 interface PopupOptions {
@@ -44,7 +74,7 @@ interface ShowOptions {
   x: number;
   y: number;
   task: Task;
-  target: HTMLElement;
+  target: SVGElement;
 }
 
 type PopupFunction = (options: PopupOptions) => string | false | null;
