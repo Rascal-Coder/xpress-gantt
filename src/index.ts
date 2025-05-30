@@ -838,6 +838,7 @@ export default class Gantt implements GanttElements, GanttMethods {
         ids = [parent_bar_id];
       }
       bars = ids.map((id) => this.get_bar(id));
+      console.log('bars', bars);
 
       this.bar_being_dragged = false;
       pos = x_on_start;
@@ -2060,14 +2061,27 @@ export default class Gantt implements GanttElements, GanttMethods {
   }
 }
 
+/**
+ * 为任务生成唯一标识符
+ * @param task 任务对象
+ * @returns 由任务名称和随机字符串组合而成的唯一ID，格式为`${task.name}_${随机字符串}`
+ * @example
+ * // 返回类似 "任务1_f7x8w9z0y1"
+ * generate_id({ name: "任务1", ... })
+ */
 function generate_id(task: Task) {
   return `${task.name}_${Math.random().toString(36).slice(2, 12)}`;
 }
 
+/**
+ * 净化字符串，将特殊字符替换为下划线
+ * @param s 需要处理的原始字符串
+ * @returns 将空格、冒号和点号替换为下划线后的字符串
+ * @example
+ * sanitize("hello world") // 返回 "hello_world"
+ * sanitize("time:12:30") // 返回 "time_12_30"
+ * sanitize("version.1.0") // 返回 "version_1_0"
+ */
 function sanitize(s: string) {
   return s.replaceAll(' ', '_').replaceAll(':', '_').replaceAll('.', '_');
-}
-
-if (typeof window !== 'undefined') {
-  window.Gantt = Gantt;
 }

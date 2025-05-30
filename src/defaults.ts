@@ -1,10 +1,32 @@
 import date_utils from './date-utils';
 
+/**
+ * 获取日期所在的十年开始年份
+ * @param d 输入日期
+ * @returns 十年的开始年份，如2020年代返回"2020"
+ * @example
+ * getDecade(new Date(2023, 5, 15)) // 返回 "2020"
+ * getDecade(new Date(2019, 1, 1)) // 返回 "2010"
+ */
 function getDecade(d: Date) {
   const year = d.getFullYear();
   return `${year - (year % 10)}`;
 }
 
+/**
+ * 格式化显示一周的时间范围
+ * @param d 当前周的开始日期
+ * @param ld 上一个日期（用于判断月份是否变化）
+ * @param lang 语言代码
+ * @returns 格式化的周范围字符串，如"15 Jan - 21 Jan"或"15 - 21 Jan"
+ * @example
+ * // 当周开始和结束在同一月份
+ * formatWeek(new Date(2023, 0, 15), null, 'zh') // 返回 "15 Jan - 21 Jan"
+ * // 当上一个日期与当前日期在同一月份时，开始日期会省略月份
+ * formatWeek(new Date(2023, 0, 15), new Date(2023, 0, 8), 'zh') // 返回 "15 - 21 Jan"
+ * // 当周跨越两个月份时
+ * formatWeek(new Date(2023, 0, 29), new Date(2023, 0, 22), 'zh') // 返回 "29 Jan - 4 Feb"
+ */
 function formatWeek(d: Date, ld: Date | null, lang: string) {
   const endOfWeek = date_utils.add(d, 6, 'day');
   const endFormat = endOfWeek.getMonth() !== d.getMonth() ? 'D MMM' : 'D';
