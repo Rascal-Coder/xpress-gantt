@@ -143,7 +143,14 @@ interface ViewMode {
   column_width?: number;
   padding?: string | string[];
   date_format?: string;
-  upper_text(date: Date, lastDate: Date | null, language: string): string;
+  upper_text:
+    | ((date: Date, lastDate: Date | null, language: string) => string)
+    | string;
+  lower_text:
+    | ((date: Date, lastDate: Date | null, language: string) => string)
+    | string;
+  thick_line?: (date: Date) => boolean;
+  snap_at?: string;
   [key: string]: unknown;
 }
 
@@ -160,15 +167,6 @@ interface DurationResult {
   duration: number;
   scale: DateScale;
 }
-
-// interface ProcessedTask extends Task {
-//   _start: Date;
-//   _end: Date;
-//   _index: number;
-//   dependencies: string[];
-//   id: string;
-//   end: Date;
-// }
 
 interface LayerElements {
   [key: string]: SVGElement;
@@ -197,6 +195,8 @@ interface DateInfo {
   lower_text: string;
   upper_text: string;
   formatted_date: string;
+  date: Date;
+  column_width: number;
 }
 
 interface ViewModeInput {
@@ -268,14 +268,6 @@ export default class Gantt implements GanttElements, GanttMethods {
   private gantt_start: Date = new Date();
   private gantt_end: Date = new Date();
   private dates: Date[] = [];
-
-  // private is_resizing_left = false;
-  // private is_resizing_right = false;
-  // private is_dragging = false;
-  // private parent_bar_id: string | null = null;
-  // private drag_bars: Bar[] = [];
-  // private pos = 0;
-  // private x_on_start = 0;
 
   get $header(): HTMLElement {
     return this._$header;
@@ -354,7 +346,7 @@ export default class Gantt implements GanttElements, GanttMethods {
       append_to: this.$svg.parentElement as HTMLElement,
     });
 
-    this.$container.appendChild(this.$svg);
+    $(this.$container).append(this.$svg);
     this.$popup_wrapper = this.create_el({
       classes: 'popup-wrapper',
       append_to: this.$container,
@@ -921,11 +913,21 @@ export default class Gantt implements GanttElements, GanttMethods {
         this.config.unit!
       );
 
-      let current_upper = this.config.view_mode?.upper_text(
-        this.current_date,
-        null,
-        this.options.language!
-      );
+      let current_upper = '';
+      if (typeof this.config.view_mode?.upper_text === 'function') {
+        current_upper = this.config.view_mode.upper_text(
+          this.current_date,
+          null,
+          this.options.language!
+        );
+      } else if (this.config.view_mode?.upper_text) {
+        current_upper = date_utils.format(
+          this.current_date,
+          this.config.view_mode.upper_text,
+          this.options.language!
+        );
+      }
+
       let $el = this.upperTexts.find((el) => el.textContent === current_upper);
       // Recalculate for smoother experience
       this.current_date = date_utils.add(
@@ -935,11 +937,22 @@ export default class Gantt implements GanttElements, GanttMethods {
           this.config.step!,
         this.config.unit!
       );
-      current_upper = this.config.view_mode?.upper_text(
-        this.current_date,
-        null,
-        this.options.language!
-      );
+
+      current_upper = '';
+      if (typeof this.config.view_mode?.upper_text === 'function') {
+        current_upper = this.config.view_mode.upper_text(
+          this.current_date,
+          null,
+          this.options.language!
+        );
+      } else if (this.config.view_mode?.upper_text) {
+        current_upper = date_utils.format(
+          this.current_date,
+          this.config.view_mode.upper_text,
+          this.options.language!
+        );
+      }
+
       $el = this.upperTexts.find((el) => el.textContent === current_upper);
 
       if ($el !== this.$current) {
@@ -1160,7 +1173,6 @@ export default class Gantt implements GanttElements, GanttMethods {
     });
   }
   render(): void {
-    console.log('render=====>');
     // 实现渲染逻辑
     this.clear();
     this.setup_layers();
@@ -1252,7 +1264,6 @@ export default class Gantt implements GanttElements, GanttMethods {
         append_to: this.$svg,
       });
     }
-    console.log('this.layers=====>', this.layers);
     this.$extras = this.create_el({
       classes: 'extras',
       append_to: this.$container,
@@ -1337,7 +1348,7 @@ export default class Gantt implements GanttElements, GanttMethods {
   make_grid_header() {
     const columnWidth = Number(this.config.column_width ?? 0);
     const datesLength = this.dates?.length ?? 0;
-    const headerWidth = Math.floor(datesLength * columnWidth);
+    const headerWidth = datesLength * columnWidth;
     this._$header = this.create_el({
       width: headerWidth,
       classes: 'grid-header',
@@ -1363,36 +1374,45 @@ export default class Gantt implements GanttElements, GanttMethods {
 
     if (this.options.view_mode_select) {
       const $select = document.createElement('select');
-      $select.classList.add('viewmode-select');
+      $($select).addClass('viewmode-select');
 
       const $el = document.createElement('option');
-      $el.selected = true;
-      $el.disabled = true;
-      $el.textContent = 'Mode';
-      $select.appendChild($el);
+      // $el.selected = true;
+      // $el.disabled = true;
+      // $el.textContent = 'Mode';
+      $($el)
+        .prop('selected', true)
+        .prop('disabled', true)
+        .prop('textContent', 'Mode');
+      $($select).append($el);
 
       for (const mode of this.options.view_modes ?? []) {
         const $option = document.createElement('option');
-        $option.value = mode.name;
-        $option.textContent = mode.name;
+        $($option).prop('value', mode.name).prop('textContent', mode.name);
+        // $option.value = mode.name;
+        // $option.textContent = mode.name;
         if (mode.name === this.config.view_mode?.name) {
-          $option.selected = true;
+          // $option.selected = true;
+          $($option).prop('selected', true);
         }
-        $select.appendChild($option);
+        // $select.appendChild($option);
+        $($select).append($option);
       }
 
-      $select.addEventListener('change', () => {
+      $($select).on('change', () => {
         this.change_view_mode($select.value, true);
       });
-      this._$side_header.appendChild($select);
+      // this._$side_header.appendChild($select);
+      $(this._$side_header).append($select);
     }
 
     if (this.options.today_button) {
       const $today_button = document.createElement('button');
-      $today_button.classList.add('today-button');
-      $today_button.textContent = 'Today';
-      $today_button.onclick = () => this.scroll_current();
-      this._$side_header.prepend($today_button);
+      $($today_button).addClass('today-button').prop('textContent', 'Today');
+      $today_button.onclick = () => {
+        this.scroll_current();
+      };
+      $(this._$side_header).prepend($today_button);
       this._$today_button = $today_button;
     }
   }
@@ -1953,10 +1973,76 @@ export default class Gantt implements GanttElements, GanttMethods {
   }
 
   get_dates_to_draw(): DateInfo[] {
-    // Implementation needed
-    return [];
+    let last_date_info: DateInfo | null = null;
+    const dates = this.dates.map((date) => {
+      const d = this.get_date_info(date, last_date_info);
+      last_date_info = d;
+      return d;
+    });
+    return dates;
   }
+  get_date_info(date: Date, last_date_info: DateInfo | null) {
+    const last_date = last_date_info ? last_date_info.date : null;
 
+    const x = last_date_info
+      ? last_date_info.x + last_date_info.column_width
+      : 0;
+
+    const upper_text = this.config.view_mode?.upper_text;
+    const lower_text = this.config.view_mode?.lower_text;
+
+    // 处理upper_text
+    let upper_text_fn: (
+      date: Date,
+      lastDate: Date | null,
+      language: string
+    ) => string;
+    if (!upper_text) {
+      upper_text_fn = () => '';
+    } else if (typeof upper_text === 'string') {
+      upper_text_fn = (date) =>
+        date_utils.format(date, upper_text, this.options.language || 'en');
+    } else {
+      upper_text_fn = upper_text;
+    }
+
+    // 处理lower_text
+    let lower_text_fn: (
+      date: Date,
+      lastDate: Date | null,
+      language: string
+    ) => string;
+    if (!lower_text) {
+      lower_text_fn = () => '';
+    } else if (typeof lower_text === 'string') {
+      lower_text_fn = (date) =>
+        date_utils.format(date, lower_text, this.options.language || 'en');
+    } else {
+      lower_text_fn = lower_text;
+    }
+
+    if (this.config.view_mode) {
+      this.config.view_mode.upper_text = upper_text_fn;
+      this.config.view_mode.lower_text = lower_text_fn;
+    }
+
+    return {
+      date,
+      formatted_date: sanitize(
+        date_utils.format(
+          date,
+          this.config.date_format || '',
+          this.options.language || 'en'
+        )
+      ),
+      column_width: this.config.column_width || 0,
+      x,
+      upper_text: upper_text_fn(date, last_date, this.options.language || 'en'),
+      lower_text: lower_text_fn(date, last_date, this.options.language || 'en'),
+      upper_y: 17,
+      lower_y: (this.options.upper_header_height || 0) + 5,
+    };
+  }
   get_task(id: string): Task | undefined {
     return this.tasks.find((task) => task.id === id);
   }
@@ -1972,48 +2058,9 @@ export default class Gantt implements GanttElements, GanttMethods {
       this.$svg.setAttribute('width', actual_width.toString());
     }
   }
-
-  // private initializeBarDrag(element: Element) {
-  //   if (element.classList.contains('left')) {
-  //     this.is_resizing_left = true;
-  //     element.classList.add('visible');
-  //   } else if (element.classList.contains('right')) {
-  //     this.is_resizing_right = true;
-  //     element.classList.add('visible');
-  //   } else if (element.classList.contains('bar-wrapper')) {
-  //     this.is_dragging = true;
-  //   }
-  // }
-
-  // private hidePopupIfExists() {
-  //   if (this.popup) {
-  //     this.popup.hide();
-  //   }
-  // }
-
-  // private setupBarDragState(id: string, mouseEvent: MouseEvent) {
-  //   this.parent_bar_id = id;
-  //   const dependent_ids = this.options.move_dependencies
-  //     ? [id, ...this.get_all_dependent_tasks(id)]
-  //     : [id];
-
-  //   this.drag_bars = dependent_ids.map((id) => this.get_bar(id));
-  //   this.bar_being_dragged = false;
-  //   this.pos = mouseEvent.offsetX;
-  //   this.x_on_start = mouseEvent.offsetX;
-
-  //   for (const bar of this.drag_bars) {
-  //     const $bar = bar.$bar;
-  //     $bar.ox = $bar.getX();
-  //     $bar.oy = $bar.getY();
-  //     $bar.owidth = $bar.getWidth();
-  //     $bar.finaldx = 0;
-  //   }
-  // }
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-function generate_id(task: any) {
+function generate_id(task: Task) {
   return `${task.name}_${Math.random().toString(36).slice(2, 12)}`;
 }
 

@@ -5,7 +5,7 @@ function getDecade(d: Date) {
   return `${year - (year % 10)}`;
 }
 
-function formatWeek(d: Date, ld: Date, lang: string) {
+function formatWeek(d: Date, ld: Date | null, lang: string) {
   const endOfWeek = date_utils.add(d, 6, 'day');
   const endFormat = endOfWeek.getMonth() !== d.getMonth() ? 'D MMM' : 'D';
   const beginFormat = !ld || d.getMonth() !== ld.getMonth() ? 'D MMM' : 'D';
@@ -19,7 +19,7 @@ const DEFAULT_VIEW_MODES = [
     step: '1h',
     date_format: 'YYYY-MM-DD HH:',
     lower_text: 'HH',
-    upper_text: (d: Date, ld: Date, lang: string) =>
+    upper_text: (d: Date, ld: Date | null, lang: string) =>
       !ld || d.getDate() !== ld.getDate()
         ? date_utils.format(d, 'D MMMM', lang)
         : '',
@@ -31,7 +31,7 @@ const DEFAULT_VIEW_MODES = [
     step: '6h',
     date_format: 'YYYY-MM-DD HH:',
     lower_text: 'HH',
-    upper_text: (d: Date, ld: Date, lang: string) =>
+    upper_text: (d: Date, ld: Date | null, lang: string) =>
       !ld || d.getDate() !== ld.getDate()
         ? date_utils.format(d, 'D MMM', lang)
         : '',
@@ -43,9 +43,9 @@ const DEFAULT_VIEW_MODES = [
     step: '12h',
     date_format: 'YYYY-MM-DD HH:',
     lower_text: 'HH',
-    upper_text: (d: Date, ld: Date, lang: string) => {
+    upper_text: (d: Date, ld: Date | null, lang: string) => {
       if (!ld || d.getDate() !== ld.getDate()) {
-        const format = d.getMonth() !== ld.getMonth() ? 'D MMM' : 'D';
+        const format = d.getMonth() !== ld?.getMonth() ? 'D MMM' : 'D';
         return date_utils.format(d, format, lang);
       }
       return '';
@@ -57,11 +57,11 @@ const DEFAULT_VIEW_MODES = [
     padding: '7d',
     date_format: 'YYYY-MM-DD',
     step: '1d',
-    lower_text: (d: Date, ld: Date, lang: string) =>
+    lower_text: (d: Date, ld: Date | null, lang: string) =>
       !ld || d.getDate() !== ld.getDate()
         ? date_utils.format(d, 'D', lang)
         : '',
-    upper_text: (d: Date, ld: Date, lang: string) =>
+    upper_text: (d: Date, ld: Date | null, lang: string) =>
       !ld || d.getMonth() !== ld.getMonth()
         ? date_utils.format(d, 'MMMM', lang)
         : '',
@@ -74,7 +74,7 @@ const DEFAULT_VIEW_MODES = [
     date_format: 'YYYY-MM-DD',
     column_width: 140,
     lower_text: formatWeek,
-    upper_text: (d: Date, ld: Date, lang: string) =>
+    upper_text: (d: Date, ld: Date | null, lang: string) =>
       !ld || d.getMonth() !== ld.getMonth()
         ? date_utils.format(d, 'MMMM', lang)
         : '',
@@ -88,7 +88,7 @@ const DEFAULT_VIEW_MODES = [
     column_width: 120,
     date_format: 'YYYY-MM',
     lower_text: 'MMMM',
-    upper_text: (d: Date, ld: Date, lang: string) =>
+    upper_text: (d: Date, ld: Date | null, lang: string) =>
       !ld || d.getFullYear() !== ld.getFullYear()
         ? date_utils.format(d, 'YYYY', lang)
         : '',
@@ -101,7 +101,7 @@ const DEFAULT_VIEW_MODES = [
     step: '1y',
     column_width: 120,
     date_format: 'YYYY',
-    upper_text: (d: Date, ld: Date, lang: string) =>
+    upper_text: (d: Date, ld: Date | null, lang: string) =>
       !ld || getDecade(d) !== getDecade(ld) ? getDecade(d) : '',
     lower_text: 'YYYY',
     snap_at: '30d',
